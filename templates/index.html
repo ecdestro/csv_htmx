@@ -1,19 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CSV to HTML Table</title>
-        <script src="scripts/htmx.min.js"></script>
-    </head>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>CSV to HTML Table</title>
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+		<script src={{ url_for('static', filename='scripts/htmx.min.js') }}></script>
+	</head>
 
-    <body>
-        <h1>CSV to HTML Table</h1>
-        <div hx-get="/" hx-trigger="load" hx-swap="outerHTML" hx-target="#table-container">
-            <p>Loading CSV data...</p>
-        </div>
-        <div id="table-container">
-            {{ table|safe }}
-        </div>
-    </body>
+	<body>
+		<h1>CSV to HTML Table</h1>
+		<form hx-post="/upload_csv" hx-target="#table-container"
+		enctype="multipart/form-data">
+			<input type="file" name="csv_file" accept=".csv">
+			<button type="submit">Upload CSV</button>
+		</form>
+		<input type="text" id="search-input" placeholder="Search...">
+		<div id="table-container">
+			{{ table|safe }}
+		</div>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const searchInput = document.getElementById('search-input');
+				const tableContainer = document.getElementById('table-container');
+
+				// Listen for input changes in the search input field
+				searchInput.addEventListener('input', () => {
+					const searchQuery = searchInput.value.trim();
+
+					// Send an htmx POST request to /search with the search query
+					fetch('/search', {
+						method: 'POST',
+						body: new URLSearchParams({ 'search_query': searchQuery }),
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded',
+						},
+					})
+						.then(response => response.text())
+						.then(html => {
+							// Update the table with the filtered data
+							tableContainer.innerHTML = html;
+						});
+				});
+			});
+		</script>
+
+	</body>
 </html>
